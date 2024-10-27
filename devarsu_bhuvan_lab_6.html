@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Coordinates Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        .info {
+            font-family: Arial, sans-serif;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Map of US</h2>
+    <div id="map"></div>
+    <div class="info" id="info"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Function to get a random coordinate within the specified range
+        function getRandomInRange(from, to, fixed) {
+            return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+        }
+
+        // Initialize map centered on the US
+        const map = L.map('map').setView([37.0902, -95.7129], 4);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Generate 3 random coordinate sets
+        const coordinates = [
+            { id: 1, lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+            { id: 2, lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+            { id: 3, lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) }
+        ];
+
+        // Display markers and fetch locality for each
+        coordinates.forEach(coord => {
+            // Add marker to map
+            const marker = L.marker([coord.lat, coord.lng]).addTo(map);
+
+            // Fetch locality data
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coord.lat}&longitude=${coord.lng}&localityLanguage=en`)
+                .then(response => response.json())
+                .then(data => {
+                    const locality = data.locality || "Unknown locality";
+                    marker.bindPopup(`Marker ${coord.id}: ${locality}`).openPopup();
+
+                    // Display marker info below the map
+                    document.getElementById('info').innerHTML += `
+                        <p>Marker ${coord.id}: Latitude: ${coord.lat}, Longitude: ${coord.lng}</p>
+                        <p>Locality: ${locality}</p>
+                    `;
+                })
+                .catch(error => console.log('Error fetching locality:', error));
+        });
+    </script>
+</body>
+</html>
